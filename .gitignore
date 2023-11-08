@@ -11,3 +11,4 @@ chromedriver.tar.gz
 linkedin-jobs.csv
 hn_homepage.png
 sortedCSV.csv
+/__pycache__/*

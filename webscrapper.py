@@ -1,25 +1,25 @@
 import csv
 import requests
 import os
-import subprocess
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
+from sort_helper import li_csv_sort
 
 config = load_dotenv("creds.env")
 
 #DRIVER_PATH = './chromedriver/chromedriver-linux64/chromedriver' - disabled to run on windows system
-DRIVER_PATH = './chromedriver/chromedriver.exe'
+DRIVER_PATH = './chromedriver/chromedriver.exe' # - added to run within windows
 USERNAME = os.environ.get('USERNAME')
 PASSWORD = os.environ.get('PASSWORD')
 
 # ----- disabled to run on windows system -----
 # service = Service(executable_path=DRIVER_PATH)
 # options = webdriver.ChromeOptions()
-# options.headless = True - disabled to run on windows system
+# options.headless = True
 # options.binary_location = './chromedriver/chrome-linux64/chrome'
 # options.add_argument('--headless')
 # options.add_argument("--window-size=1920,1200")
@@ -32,14 +32,37 @@ options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 # ---------------------------------------
 
-image_array = []
 
-webpage = "https://www.linkedin.com/jobs/search/?keywords=junior%20developer%20python&location=Lisbon%2C%20Portugal&position=1&pageNum=0&origin=JOB_SEARCH_PAGE_JOB_FILTER&sortBy=DD&start="
 # webpage = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=junior%20developer%20python&location=Lisbon%2C%20Portugal&trk=public_jobs_jobs-search-bar_search-submit&position=1&pageNum=0&origin=JOB_SEARCH_PAGE_JOB_FILTER&sortBy=DD&start="
 
-file = open('linkedin-jobs.csv', 'a')
-writer = csv.writer(file)
-writer.writerow(['Title', 'Company', 'Location', 'Apply', 'Post Date'])
+filename = "linkedin-jobs.csv"
+
+def main():
+	#os.system("sh ./untar.sh") - disabled to run on windows system
+
+	search_words = input("Search for: ").strip().replace(" ", "%20")
+	search_location = input("City to look: ").strip().replace(" ", "%20")
+	driver = webdriver.Chrome(service=service, options=options)
+
+	global file
+	global writer
+	global webpage
+	webpage = f"https://www.linkedin.com/jobs/search/?keywords={search_words}&location={search_location}%2C%20Portugal&position=1&pageNum=0&origin=JOB_SEARCH_PAGE_JOB_FILTER&sortBy=DD&start="
+	file = open(filename, 'a')
+	writer = csv.writer(file)
+	writer.writerow(['Title', 'Company', 'Location', 'Apply', 'Post Date'])
+
+	get_url_login(driver=driver)
+	get_jobs_url(driver=driver,webpage=webpage, page_number=25)
+
+	file.close()
+	print('File closed')
+
+	# if csv file exists, transfer data do sorted new csv and remove the old one 
+	if os.path.exists(filename):
+		if li_csv_sort(filename):
+			print("All set")
+
 
 def get_url_login(driver):
 	driver.get('https://www.linkedin.com/login?fromSignIn=true&trk=guest_homepage-basic_nav-header-signin')
@@ -64,9 +87,7 @@ def get_jobs_url(driver, webpage, page_number):
 	if page_number < 25:
 		page_number = page_number + 25
 		get_jobs_url(webpage, page_number)
-	else:
-		file.close()
-		print('File closed')
+
 
 def parse_content(jobs_content):
 	soup = BeautifulSoup(jobs_content, 'html.parser')
@@ -79,7 +100,7 @@ def parse_content(jobs_content):
 		if job.find('time', class_='job-search-card__listdate'):
 			job_post_date = job.find('time', class_='job-search-card__listdate').text.strip()
 		else:
-			'No date'
+			job_post_date = 'No date'
 		create_csv_file(job_title=job_title, job_company=job_company, job_location=job_location, job_link=job_link, job_post_date=job_post_date)
 
 def create_csv_file(job_title, job_company, job_location, job_link, job_post_date):
@@ -93,16 +114,6 @@ def create_csv_file(job_title, job_company, job_location, job_link, job_post_dat
 			])
 	else:
 		print('Error adding to csv file')
-
-
-def main():
-	#os.system("sh ./untar.sh") - disabled to run on windows system
-	driver = webdriver.Chrome(service=service, options=options)
-
-	
-
-	get_url_login(driver=driver)
-	get_jobs_url(driver=driver,webpage=webpage, page_number=25)
 
 
 if __name__ == '__main__':

@@ -1,13 +1,15 @@
 import csv
+import os
 import pandas as pd
+
 
 
 def li_csv_sort(csv_file, sort_key='Age', sort_reverse=False):
     """Linked In CSV File Sortint
         li_csv_sort('filename.csv', [sort_key='Age', sort_reverse=False])
-        - 'filename.csv': name of the csv file do sort
-        - sort_key: name of the base key to sort the file - Age(by date, DEFAULT VALUE); Title; Company
-        - sort_reverse: reverse sort order, DEFAULT=False"""
+        - 'filename.csv': Type String, name of the csv file do sort
+        - sort_key: Type String, name of the base key to sort the file - Age(by date, DEFAULT VALUE); Title; Company
+        - sort_reverse: Type BOOL, reverse sort order, DEFAULT=False"""
     
     # declare listings variable
     listed_entries = []
@@ -28,17 +30,22 @@ def li_csv_sort(csv_file, sort_key='Age', sort_reverse=False):
             row["Apply"] = row["Apply"].lstrip('b')
 
             # manage the 'Post Date' data to allow sorting
-            date = row["Post Date"].split(" ")
-           
-            if date[1] not in ["day", "days"]:
-                if date[1] in ["month", "months"]:
-                    date[0] = int(date[0])*30
-                    row["Post Date"] = f"More than {date[0]} days ago"
-                elif date[1] in ["week", "weeks"]:
-                    date[0] = int(date[0])*7
-                    row["Post Date"] = f"More than {date[0]} days ago"
+            if row["Post Date"] != 'No date':
+                date = row["Post Date"].split(" ")
+            
+                if date[1] not in ["day", "days"]:
+                    if date[1] in ["month", "months"]:
+                        date[0] = int(date[0])*30
+                        row["Post Date"] = f"More than {date[0]} days ago"
+                    elif date[1] in ["week", "weeks"]:
+                        date[0] = int(date[0])*7
+                        row["Post Date"] = f"More than {date[0]} days ago"
 
-            row["Time"] = int(date[0])
+                row["Time"] = int(date[0])
+            
+            else:
+                # in case job listing has no post date
+                row["Time"] = 1000
 
             listed_entries.append({"Title": row["Title"], "Company": row["Company"], "Location": row["Location"], "Apply": row["Apply"], "Date": row["Post Date"], "Age": row["Time"]})
 
@@ -47,13 +54,18 @@ def li_csv_sort(csv_file, sort_key='Age', sort_reverse=False):
     for row in listed_entries:
         del row["Age"]
 
-    # write data to new csv file
-    with open('sortedCSV.csv', 'a') as sorted_csv:
+    os.remove(csv_file)
+
+    # write data to new csv file with same name
+    with open(csv_file, 'a') as sorted_csv:
         fieldnames = ["Title", "Company", "Location", "Apply", "Date"]
         writer = csv.DictWriter(sorted_csv, fieldnames=fieldnames) 
         writer.writeheader()
         for row in listed_entries:
             writer.writerow(row)
+
+    if os.path.exists(csv_file):
+        return True
             
 
 def main():
