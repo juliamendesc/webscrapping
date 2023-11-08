@@ -6,20 +6,31 @@ from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 
 config = load_dotenv("creds.env")
 
-DRIVER_PATH = './chromedriver/chromedriver-linux64/chromedriver'
+#DRIVER_PATH = './chromedriver/chromedriver-linux64/chromedriver' - disabled to run on windows system
+DRIVER_PATH = './chromedriver/chromedriver.exe'
 USERNAME = os.environ.get('USERNAME')
 PASSWORD = os.environ.get('PASSWORD')
 
+# ----- disabled to run on windows system -----
+# service = Service(executable_path=DRIVER_PATH)
+# options = webdriver.ChromeOptions()
+# options.headless = True - disabled to run on windows system
+# options.binary_location = './chromedriver/chrome-linux64/chrome'
+# options.add_argument('--headless')
+# options.add_argument("--window-size=1920,1200")
+
+# ----- added to run within windows -----
 service = Service(executable_path=DRIVER_PATH)
-options = webdriver.ChromeOptions()
-options.headless = True
-options.binary_location = './chromedriver/chrome-linux64/chrome'
+options = Options()
 options.add_argument('--headless')
-options.add_argument("--window-size=1920,1200")
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+# ---------------------------------------
 
 image_array = []
 
@@ -85,8 +96,10 @@ def create_csv_file(job_title, job_company, job_location, job_link, job_post_dat
 
 
 def main():
-	os.system("sh ./untar.sh")
+	#os.system("sh ./untar.sh") - disabled to run on windows system
 	driver = webdriver.Chrome(service=service, options=options)
+
+	
 
 	get_url_login(driver=driver)
 	get_jobs_url(driver=driver,webpage=webpage, page_number=25)
