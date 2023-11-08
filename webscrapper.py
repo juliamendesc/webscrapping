@@ -79,6 +79,7 @@ def get_jobs_url(driver, webpage, page_number):
 	driver.save_screenshot('hn_homepage.png')
 	if response.status_code != 200:
 		print("Error fetching page")
+		file.close()
 		exit()
 	else:
 		jobs_content = response.content
@@ -114,6 +115,7 @@ def create_csv_file(job_title, job_company, job_location, job_link, job_post_dat
 			])
 	else:
 		print('Error adding to csv file')
+		file.close()
 
 
 if __name__ == '__main__':
