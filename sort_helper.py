@@ -47,13 +47,17 @@ def li_csv_sort(csv_file, sort_key='Age', sort_reverse=False):
                 # in case job listing has no post date
                 row["Time"] = 1000
 
+            # add row to listings
             listed_entries.append({"Title": row["Title"], "Company": row["Company"], "Location": row["Location"], "Apply": row["Apply"], "Date": row["Post Date"], "Age": row["Time"]})
 
-    # delete the Age field used for date sorting
+    # sort the data
     listed_entries = sorted(listed_entries, key=lambda row: row[sort_key], reverse=sort_reverse)
+
+    # delete the Age field used for date sorting
     for row in listed_entries:
         del row["Age"]
 
+    # delete the unnecessary csv file
     os.remove(csv_file)
 
     # write data to new csv file with same name
